@@ -1,12 +1,15 @@
 let mode = "calm";
 let history = [];
+let lastInteraction = Date.now();
 
 const input = document.getElementById("input");
 const chat = document.getElementById("chat");
 const app = document.getElementById("app");
 const modeIndicator = document.getElementById("modeIndicator");
 
-// Load memory
+/* =========================
+   LOAD MEMORY
+========================= */
 window.onload = () => {
   const saved = localStorage.getItem("history");
   if (saved) {
@@ -15,42 +18,60 @@ window.onload = () => {
   }
 };
 
-// Detect "emotion"
+/* =========================
+   EMOTION DETECTION
+========================= */
 input.addEventListener("input", () => {
-  const length = input.value.length;
+  lastInteraction = Date.now();
 
-  if (length > 80) setMode("intense");
-  else if (length > 30) setMode("focused");
+  const len = input.value.length;
+  if (len > 80) setMode("intense");
+  else if (len > 30) setMode("focused");
   else setMode("calm");
 });
 
-function setMode(newMode) {
-  mode = newMode;
-  app.className = newMode;
-  modeIndicator.innerText = "Mode: " + newMode;
+/* =========================
+   MODE SYSTEM
+========================= */
+function setMode(m) {
+  mode = m;
+  app.className = m;
+  modeIndicator.innerText = "Mode: " + m;
 }
 
-// Send message
+/* =========================
+   SEND MESSAGE
+========================= */
 async function sendMessage() {
   const text = input.value.trim();
   if (!text) return;
 
+  lastInteraction = Date.now();
+
   const userMsg = { role: "user", text };
-  history.push(userMsg);
-  renderMessage(userMsg);
+  addMessage(userMsg);
 
   input.value = "";
 
   const aiText = await generateAIResponse(text);
   const aiMsg = { role: "ai", text: aiText };
 
-  history.push(aiMsg);
-  renderMessage(aiMsg);
+  addMessage(aiMsg);
+  speak(aiText);
+}
 
+/* =========================
+   ADD MESSAGE
+========================= */
+function addMessage(msg) {
+  history.push(msg);
+  renderMessage(msg);
   saveMemory();
 }
 
-// Render messages
+/* =========================
+   RENDER
+========================= */
 function renderMessage(msg) {
   const div = document.createElement("div");
   div.className = `message ${msg.role}`;
@@ -60,21 +81,95 @@ function renderMessage(msg) {
   chat.scrollTop = chat.scrollHeight;
 }
 
-// Save memory
+/* =========================
+   MEMORY
+========================= */
 function saveMemory() {
   localStorage.setItem("history", JSON.stringify(history));
 }
 
-// Fake AI (replace later with real API)
+/* =========================
+   AI SYSTEM
+========================= */
 async function generateAIResponse(input) {
-  await delay(500);
 
-  if (mode === "intense") return "I feel your intensity. Focus.";
-  if (mode === "focused") return "You're getting closer.";
-  return "I'm here. Speak freely.";
+  // OPTIONAL REAL AI (insert key if you want)
+  const API_KEY = "";
+
+  if (API_KEY) {
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + API_KEY
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: history.slice(-10)
+      })
+    });
+
+    const data = await res.json();
+    return data.choices[0].message.content;
+  }
+
+  // FALLBACK AI (SMARTER)
+  if (mode === "intense") return "You're pushing hard. Focus your energy.";
+  if (mode === "focused") return "You're getting sharper. Continue.";
+  return "I'm here with you.";
 }
 
-// Utility delay
-function delay(ms) {
-  return new Promise(res => setTimeout(res, ms));
+/* =========================
+   VOICE INPUT
+========================= */
+function startVoice() {
+  const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+  recognition.lang = "en-US";
+
+  recognition.onresult = (event) => {
+    input.value = event.results[0][0].transcript;
+    sendMessage();
+  };
+
+  recognition.start();
+}
+
+/* =========================
+   VOICE OUTPUT
+========================= */
+function speak(text) {
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.rate = 0.9;
+  utter.pitch = 0.8;
+  speechSynthesis.speak(utter);
+}
+
+/* =========================
+   PRESENCE ENGINE (AUTO)
+========================= */
+setInterval(() => {
+  const idleTime = Date.now() - lastInteraction;
+
+  if (idleTime > 15000) {
+    const msg = {
+      role: "ai",
+      text: getPresenceMessage()
+    };
+
+    addMessage(msg);
+    speak(msg.text);
+
+    lastInteraction = Date.now();
+  }
+}, 5000);
+
+function getPresenceMessage() {
+  const messages = [
+    "You paused. I'm still here.",
+    "Thinking?",
+    "There's something you're looking for.",
+    "Continue when you're ready."
+  ];
+
+  return messages[Math.floor(Math.random() * messages.length)];
 }
