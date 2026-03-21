@@ -2,35 +2,29 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>AI Presence Interface</title>
+  <title>AI Presence</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <div id="app" class="calm">
+<div id="app" class="calm">
 
-    <h1>AI Presence Interface</h1>
+  <h1>AI Presence</h1>
+  <div id="modeIndicator">Mode: calm</div>
 
-    <div id="modeIndicator">Mode: calm</div>
+  <div id="chat"></div>
 
-    <div id="chat"></div>
-
-    <div class="input-area">
-      <input 
-        type="text" 
-        id="input" 
-        placeholder="Speak to the system..."
-      />
-      <button onclick="sendMessage()">Send</button>
-    </div>
-
-    <div id="threeLayer">
-      3D / Hologram Layer (ready)
-    </div>
-
+  <div class="input-area">
+    <input id="input" placeholder="Speak or type..." />
+    <button onclick="sendMessage()">Send</button>
+    <button onclick="startVoice()">🎤</button>
   </div>
 
-  <script src="main.js"></script>
+  <div id="threeLayer">Presence Field Active</div>
+
+</div>
+
+<script src="main.js"></script>
 </body>
 </html>
