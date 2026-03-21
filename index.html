@@ -1,69 +1,36 @@
-import React, { useState, useEffect } from "react"; import { motion } from "framer-motion";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Presence Interface</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
 
-// CORE IDEA: This is a foundation for a "living" AI website // Includes: // - Adaptive UI // - AI assistant shell // - 3D-ready container // - Emotion simulation layer
+  <div id="app" class="calm">
 
-export default function LegendarySite() { const [mode, setMode] = useState("calm"); const [message, setMessage] = useState(""); const [history, setHistory] = useState([]);
+    <h1>AI Presence Interface</h1>
 
-// Simulated emotion detection (based on typing speed) useEffect(() => { if (!message) return;
+    <div id="modeIndicator">Mode: calm</div>
 
-const length = message.length;
-if (length > 80) setMode("intense");
-else if (length > 30) setMode("focused");
-else setMode("calm");
+    <div id="chat"></div>
 
-}, [message]);
+    <div class="input-area">
+      <input 
+        type="text" 
+        id="input" 
+        placeholder="Speak to the system..."
+      />
+      <button onclick="sendMessage()">Send</button>
+    </div>
 
-const handleSend = () => { if (!message) return;
+    <div id="threeLayer">
+      3D / Hologram Layer (ready)
+    </div>
 
-const userMsg = { role: "user", text: message };
-const aiMsg = {
-  role: "ai",
-  text: generateAIResponse(message, mode),
-};
-
-setHistory([...history, userMsg, aiMsg]);
-setMessage("");
-
-};
-
-return ( <div className={min-h-screen p-6 transition-all duration-500 ${getModeStyle(mode)}}> <h1 className="text-3xl font-bold mb-4">AI Presence Interface</h1>
-
-<div className="mb-6">
-    <ModeIndicator mode={mode} />
   </div>
 
-  <div className="space-y-3 mb-6 max-h-80 overflow-y-auto">
-    {history.map((msg, i) => (
-      <ChatBubble key={i} msg={msg} />
-    ))}
-  </div>
-
-  <div className="flex gap-2">
-    <input
-      className="flex-1 p-3 rounded-xl text-black"
-      placeholder="Speak to the system..."
-      value={message}
-      onChange={(e) => setMessage(e.target.value)}
-    />
-    <button
-      onClick={handleSend}
-      className="px-4 py-2 rounded-xl bg-white text-black"
-    >
-      Send
-    </button>
-  </div>
-
-  <ThreeLayer />
-</div>
-
-); }
-
-function ChatBubble({ msg }) { return ( <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={p-3 rounded-xl max-w-lg ${ msg.role === "user" ? "bg-white text-black" : "bg-black text-white" }} > {msg.text} </motion.div> ); }
-
-function ModeIndicator({ mode }) { return ( <div className="text-sm opacity-70">Mode: {mode}</div> ); }
-
-function getModeStyle(mode) { switch (mode) { case "intense": return "bg-red-900 text-white"; case "focused": return "bg-blue-900 text-white"; default: return "bg-black text-white"; } }
-
-function generateAIResponse(input, mode) { if (mode === "intense") return "I feel your intensity. Let's focus."; if (mode === "focused") return "You're getting closer. Continue."; return "I'm here. Speak freely."; }
-
-// Placeholder for 3D / hologram layer function ThreeLayer() { return ( <div className="mt-10 h-40 border border-white/20 rounded-2xl flex items-center justify-center"> 3D / Hologram Layer (Three.js goes here) </div> ); }
+  <script src="main.js"></script>
+</body>
+</html>
