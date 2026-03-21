@@ -46,16 +46,32 @@ async function sendMessage() {
 
   lastInteraction = Date.now();
 
-  const userMsg = { role: "user", text };
-  addMessage(userMsg);
-
+  addMessage({ role: "user", text });
   input.value = "";
 
-  const aiText = await generateAIResponse(text);
-  const aiMsg = { role: "ai", text: aiText };
+  const thinkingEl = showThinking();
 
+  const aiText = await generateAIResponse(text);
+
+  removeThinking(thinkingEl);
+
+  const aiMsg = { role: "ai", text: aiText };
   addMessage(aiMsg);
   speak(aiText);
+}
+
+/* THINKING INDICATOR */
+function showThinking() {
+  const div = document.createElement("div");
+  div.className = "message ai thinking";
+  div.innerText = "Thinking...";
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+  return div;
+}
+
+function removeThinking(el) {
+  if (el) el.remove();
 }
 
 /* ADD MESSAGE */
@@ -65,24 +81,23 @@ function addMessage(msg) {
   saveMemory();
 }
 
-/* RENDER WITH TYPING */
+/* RENDER */
 function renderMessage(msg) {
   const div = document.createElement("div");
   div.className = `message ${msg.role}`;
-
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
-
   typeText(div, msg.text);
 }
 
+/* TYPING EFFECT */
 function typeText(el, text) {
   let i = 0;
   function typing() {
     if (i < text.length) {
       el.innerText += text[i];
       i++;
-      setTimeout(typing, 12);
+      setTimeout(typing, 10);
     }
   }
   typing();
@@ -93,31 +108,33 @@ function saveMemory() {
   localStorage.setItem("history", JSON.stringify(history));
 }
 
-/* AI */
-async function generateAIResponse(input) {
+/* REAL AI READY */
+async function generateAIResponse(userInput) {
 
-  const API_KEY = "";
+  // 🔴 IMPORTANT: leave empty for now (safe)
+  const API_URL = "";
 
-  if (API_KEY) {
-    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+  if (API_URL) {
+    const res = await fetch(API_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + API_KEY
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
         messages: history.slice(-10)
       })
     });
 
     const data = await res.json();
-    return data.choices[0].message.content;
+    return data.reply;
   }
 
-  // Smart fallback
-  if (mode === "intense") return "You're pushing hard. Focus it.";
-  if (mode === "focused") return "You're getting closer.";
+  // 🧠 ADVANCED FALLBACK
+  if (mode === "intense") return "You're pushing something deeper. Stay with it.";
+  if (mode === "focused") return "You're aligning your thoughts.";
+  
+  if (userInput.includes("?")) {
+    return "You already feel the answer forming.";
+  }
+
   return "I'm here with you.";
 }
 
@@ -142,19 +159,16 @@ function speak(text) {
   speechSynthesis.speak(utter);
 }
 
-/* PRESENCE ENGINE (FIXED + SMART) */
+/* PRESENCE ENGINE */
 setInterval(() => {
   const idle = Date.now() - lastInteraction;
 
   if (idle > 20000) {
     const msgText = getPresenceMessage();
-
     if (msgText === lastPresenceMessage) return;
 
-    const msg = { role: "ai", text: msgText };
-
-    addMessage(msg);
-    speak(msg.text);
+    addMessage({ role: "ai", text: msgText });
+    speak(msgText);
 
     lastPresenceMessage = msgText;
     lastInteraction = Date.now();
@@ -171,8 +185,7 @@ function getPresenceMessage() {
   if (!lastUser) return "I'm listening.";
 
   if (lastUser.text.length < 10) return "Go deeper.";
-
-  if (lastUser.text.includes("?")) return "You already sense the answer.";
+  if (lastUser.text.includes("?")) return "You already sense it.";
 
   return "Stay with that thought.";
 }
