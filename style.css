@@ -1,85 +1,9 @@
 body {
   margin: 0;
-  font-family: Arial;
-  transition: 0.5s;
-}
-
-#app {
-  min-height: 100vh;
-  padding: 20px;
-  box-shadow: inset 0 0 80px rgba(255,255,255,0.05);
-}
-
-/* Modes */
-.calm { background: black; color: white; }
-.focused { background: #001f3f; color: white; }
-.intense { background: #3f0000; color: white; }
-
-/* Chat */
-#chat {
-  max-height: 300px;
-  overflow-y: auto;
-  margin: 20px 0;
-}
-
-.message {
-  padding: 10px;
-  border-radius: 12px;
-  margin: 10px 0;
-  max-width: 70%;
-  opacity: 0;
-  animation: fadeIn 0.3s forwards;
-}
-
-@keyframes fadeIn {
-  to { opacity: 1; }
-}
-
-.user {
-  background: white;
-  color: black;
-  margin-left: auto;
-}
-
-.ai {
-  border: 1px solid white;
-}
-
-/* Input */
-.input-area {
-  display: flex;
-  gap: 10px;
-}
-
-input {
-  flex: 1;
-  padding: 10px;
-  border-radius: 10px;
-  border: none;
-}
-
-input:focus {
-  outline: none;
-  box-shadow: 0 0 10px rgba(255,255,255,0.3);
-}
-
-button {
-  padding: 10px;
-  border-radius: 10px;
-  border: none;
-  cursor: pointer;
-}
-
-/* Hologram */
-#threeLayer {
-  margin-top: 30px;
-  height: 220px;
-  border-radius: 20px;
   overflow: hidden;
-  background: radial-gradient(circle, rgba(255,255,255,0.08), transparent);
+  background: black;
 }
 
 canvas {
-  width: 100%;
-  height: 100%;
+  display: block;
 }
