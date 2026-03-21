@@ -1,15 +1,14 @@
 let mode = "calm";
 let history = [];
 let lastInteraction = Date.now();
+let lastPresenceMessage = "";
 
 const input = document.getElementById("input");
 const chat = document.getElementById("chat");
 const app = document.getElementById("app");
 const modeIndicator = document.getElementById("modeIndicator");
 
-/* =========================
-   LOAD MEMORY
-========================= */
+/* LOAD MEMORY */
 window.onload = () => {
   const saved = localStorage.getItem("history");
   if (saved) {
@@ -18,9 +17,12 @@ window.onload = () => {
   }
 };
 
-/* =========================
-   EMOTION DETECTION
-========================= */
+/* ENTER TO SEND */
+input.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") sendMessage();
+});
+
+/* EMOTION DETECTION */
 input.addEventListener("input", () => {
   lastInteraction = Date.now();
 
@@ -30,18 +32,14 @@ input.addEventListener("input", () => {
   else setMode("calm");
 });
 
-/* =========================
-   MODE SYSTEM
-========================= */
+/* MODE */
 function setMode(m) {
   mode = m;
   app.className = m;
   modeIndicator.innerText = "Mode: " + m;
 }
 
-/* =========================
-   SEND MESSAGE
-========================= */
+/* SEND */
 async function sendMessage() {
   const text = input.value.trim();
   if (!text) return;
@@ -60,40 +58,44 @@ async function sendMessage() {
   speak(aiText);
 }
 
-/* =========================
-   ADD MESSAGE
-========================= */
+/* ADD MESSAGE */
 function addMessage(msg) {
   history.push(msg);
   renderMessage(msg);
   saveMemory();
 }
 
-/* =========================
-   RENDER
-========================= */
+/* RENDER WITH TYPING */
 function renderMessage(msg) {
   const div = document.createElement("div");
   div.className = `message ${msg.role}`;
-  div.innerText = msg.text;
 
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
+
+  typeText(div, msg.text);
 }
 
-/* =========================
-   MEMORY
-========================= */
+function typeText(el, text) {
+  let i = 0;
+  function typing() {
+    if (i < text.length) {
+      el.innerText += text[i];
+      i++;
+      setTimeout(typing, 12);
+    }
+  }
+  typing();
+}
+
+/* MEMORY */
 function saveMemory() {
   localStorage.setItem("history", JSON.stringify(history));
 }
 
-/* =========================
-   AI SYSTEM
-========================= */
+/* AI */
 async function generateAIResponse(input) {
 
-  // OPTIONAL REAL AI (insert key if you want)
   const API_KEY = "";
 
   if (API_KEY) {
@@ -113,30 +115,26 @@ async function generateAIResponse(input) {
     return data.choices[0].message.content;
   }
 
-  // FALLBACK AI (SMARTER)
-  if (mode === "intense") return "You're pushing hard. Focus your energy.";
-  if (mode === "focused") return "You're getting sharper. Continue.";
+  // Smart fallback
+  if (mode === "intense") return "You're pushing hard. Focus it.";
+  if (mode === "focused") return "You're getting closer.";
   return "I'm here with you.";
 }
 
-/* =========================
-   VOICE INPUT
-========================= */
+/* VOICE INPUT */
 function startVoice() {
   const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
   recognition.lang = "en-US";
 
-  recognition.onresult = (event) => {
-    input.value = event.results[0][0].transcript;
+  recognition.onresult = (e) => {
+    input.value = e.results[0][0].transcript;
     sendMessage();
   };
 
   recognition.start();
 }
 
-/* =========================
-   VOICE OUTPUT
-========================= */
+/* VOICE OUTPUT */
 function speak(text) {
   const utter = new SpeechSynthesisUtterance(text);
   utter.rate = 0.9;
@@ -144,32 +142,37 @@ function speak(text) {
   speechSynthesis.speak(utter);
 }
 
-/* =========================
-   PRESENCE ENGINE (AUTO)
-========================= */
+/* PRESENCE ENGINE (FIXED + SMART) */
 setInterval(() => {
-  const idleTime = Date.now() - lastInteraction;
+  const idle = Date.now() - lastInteraction;
 
-  if (idleTime > 15000) {
-    const msg = {
-      role: "ai",
-      text: getPresenceMessage()
-    };
+  if (idle > 20000) {
+    const msgText = getPresenceMessage();
+
+    if (msgText === lastPresenceMessage) return;
+
+    const msg = { role: "ai", text: msgText };
 
     addMessage(msg);
     speak(msg.text);
 
+    lastPresenceMessage = msgText;
     lastInteraction = Date.now();
   }
 }, 5000);
 
+/* SMART PRESENCE */
 function getPresenceMessage() {
-  const messages = [
-    "You paused. I'm still here.",
-    "Thinking?",
-    "There's something you're looking for.",
-    "Continue when you're ready."
-  ];
 
-  return messages[Math.floor(Math.random() * messages.length)];
+  if (history.length === 0) return "You're here for a reason.";
+
+  const lastUser = [...history].reverse().find(m => m.role === "user");
+
+  if (!lastUser) return "I'm listening.";
+
+  if (lastUser.text.length < 10) return "Go deeper.";
+
+  if (lastUser.text.includes("?")) return "You already sense the answer.";
+
+  return "Stay with that thought.";
 }
