@@ -1,0 +1,83 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  transition: all 0.5s ease;
+}
+
+#app {
+  min-height: 100vh;
+  padding: 20px;
+}
+
+/* Modes */
+.calm {
+  background: black;
+  color: white;
+}
+
+.focused {
+  background: #001f3f;
+  color: white;
+}
+
+.intense {
+  background: #3f0000;
+  color: white;
+}
+
+/* Chat */
+#chat {
+  margin: 20px 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.message {
+  padding: 10px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  max-width: 70%;
+}
+
+.user {
+  background: white;
+  color: black;
+  margin-left: auto;
+}
+
+.ai {
+  background: black;
+  color: white;
+  border: 1px solid white;
+}
+
+/* Input */
+.input-area {
+  display: flex;
+  gap: 10px;
+}
+
+input {
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+}
+
+button {
+  padding: 10px 15px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+}
+
+/* 3D Layer */
+#threeLayer {
+  margin-top: 30px;
+  height: 150px;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
