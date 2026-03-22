@@ -10,7 +10,7 @@ window.addEventListener("resize", resize);
 resize();
 
 /* =========================
-   CORE STATE
+   STATE
 ========================= */
 let particles = [];
 let center = { x: canvas.width / 2, y: canvas.height / 2 };
@@ -20,14 +20,13 @@ let lastCursor = { x: center.x, y: center.y };
 
 let velocity = { x: 0, y: 0 };
 
-/* USER STATE */
-let userState = {
-  calm: 0,
-  restless: 0,
-  curious: 0
-};
+let userState = { calm: 0, restless: 0, curious: 0 };
 
-/* Create particles */
+let startTime = Date.now();
+let revealed = false;
+let destination = "";
+
+/* PARTICLES */
 for (let i = 0; i < 200; i++) {
   particles.push({
     x: Math.random() * canvas.width,
@@ -38,9 +37,7 @@ for (let i = 0; i < 200; i++) {
   });
 }
 
-/* =========================
-   INPUT
-========================= */
+/* INPUT */
 window.addEventListener("mousemove", (e) => {
   cursor.x = e.clientX;
   cursor.y = e.clientY;
@@ -61,17 +58,12 @@ function detectIntent() {
 
   let speed = Math.sqrt(velocity.x**2 + velocity.y**2);
 
-  /* Calm */
   if (speed < 1) userState.calm += 0.01;
-
-  /* Restless */
   if (speed > 6) userState.restless += 0.02;
 
-  /* Curious (direction changes) */
   let change = Math.abs(velocity.x) + Math.abs(velocity.y);
   if (change > 10) userState.curious += 0.015;
 
-  /* Normalize */
   userState.calm *= 0.995;
   userState.restless *= 0.995;
   userState.curious *= 0.995;
@@ -81,11 +73,34 @@ function detectIntent() {
 }
 
 /* =========================
-   UPDATE FIELD
+   DESTINATION LOGIC
+========================= */
+function decideDestination() {
+
+  if (userState.calm > userState.restless && userState.calm > userState.curious) {
+    return "ICELAND";
+  }
+
+  if (userState.restless > userState.calm && userState.restless > userState.curious) {
+    return "TOKYO";
+  }
+
+  return "PERU";
+}
+
+/* =========================
+   UPDATE
 ========================= */
 function update() {
 
   detectIntent();
+
+  let elapsed = (Date.now() - startTime) / 1000;
+
+  if (!revealed && elapsed > 12) {
+    revealed = true;
+    destination = decideDestination();
+  }
 
   center.x += (cursor.x - center.x) * 0.05;
   center.y += (cursor.y - center.y) * 0.05;
@@ -95,18 +110,13 @@ function update() {
     let dx = center.x - p.x;
     let dy = center.y - p.y;
 
-    /* Behavior changes based on user */
-    if (userState.calm > userState.restless) {
+    if (revealed) {
+      /* Collapse effect */
+      p.vx += dx * 0.01;
+      p.vy += dy * 0.01;
+    } else {
       p.vx += dx * 0.0004;
       p.vy += dy * 0.0004;
-    } else {
-      p.vx -= dx * 0.0006;
-      p.vy -= dy * 0.0006;
-    }
-
-    if (userState.curious > 0.5) {
-      p.vx += (Math.random() - 0.5) * 0.3;
-      p.vy += (Math.random() - 0.5) * 0.3;
     }
 
     p.vx *= 0.95;
@@ -114,11 +124,6 @@ function update() {
 
     p.x += p.vx / p.depth;
     p.y += p.vy / p.depth;
-
-    if (p.x < 0) p.x = canvas.width;
-    if (p.x > canvas.width) p.x = 0;
-    if (p.y < 0) p.y = canvas.height;
-    if (p.y > canvas.height) p.y = 0;
   }
 }
 
@@ -128,24 +133,20 @@ function update() {
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  let intensity = userState.calm + userState.restless + userState.curious;
-
-  const glow = ctx.createRadialGradient(
-    center.x, center.y, 0,
-    center.x, center.y, 250
-  );
-
-  glow.addColorStop(0, `rgba(255,255,255,${0.2 + intensity})`);
-  glow.addColorStop(1, "transparent");
-
-  ctx.fillStyle = glow;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
+  /* Particles */
   for (let p of particles) {
     ctx.beginPath();
     ctx.arc(p.x, p.y, 1.5 / p.depth, 0, Math.PI * 2);
     ctx.fillStyle = "white";
     ctx.fill();
+  }
+
+  /* DESTINATION REVEAL */
+  if (revealed) {
+    ctx.fillStyle = "white";
+    ctx.font = "bold 40px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(destination, canvas.width / 2, canvas.height / 2);
   }
 }
 
