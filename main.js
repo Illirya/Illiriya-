@@ -1,5 +1,17 @@
+/* =========================
+   CANVAS & UI
+========================= */
 const canvas = document.getElementById("field");
 const ctx = canvas.getContext("2d");
+
+const introText = document.getElementById("introText");
+const destinationEl = document.getElementById("destination");
+const messageEl = document.getElementById("message");
+const enterHint = document.getElementById("enterHint");
+const privateContent = document.getElementById("privateContent");
+const luxuryMessage = document.getElementById("luxuryMessage");
+const requestEntry = document.getElementById("requestEntry");
+const avatar = document.getElementById("avatar");
 
 /* Resize */
 function resize() {
@@ -13,123 +25,130 @@ resize();
    STATE
 ========================= */
 let particles = [];
-let center = { x: canvas.width / 2, y: canvas.height / 2 };
-
-let cursor = { x: center.x, y: center.y };
-let lastCursor = { x: center.x, y: center.y };
-
-let userState = { calm: 0, restless: 0, curious: 0 };
-
+let center = { x: canvas.width/2, y: canvas.height/2 };
+let cursor = { x:center.x, y:center.y };
+let lastCursor = { x:center.x, y:center.y };
+let userState = { calm:0, restless:0, curious:0 };
 let startTime = Date.now();
-let phase = "expl
-/* PARTICLES */
-for (let i = 0; i < 200; i++) {
+let phase = "explore";
+let message = "";
+let destination = "NICARAGUA";
+
+/* =========================
+   PARTICLES
+========================= */
+for(let i=0;i<300;i++){
   particles.push({
-    x: Math.random() * canvas.wi
-const canvas = document.getElementById("field");
-/* =========================
-   GLOBAL
-========================= */
-body, html {
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  font-family: "Arial", sans-serif;
-  background: black;
-  color: white;
-  height: 100vh;
-  width: 100vw;
-}
-
-canvas {
-  display: block;
+    x:Math.random()*canvas.width,
+    y:Math.random()*canvas.height,
+    vx:0,
+    vy:0,
+    depth:Math.random()*3+1
+  });
 }
 
 /* =========================
-   UI LAYER
+   CURSOR
 ========================= */
-#uiLayer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-}
+window.addEventListener("mousemove",(e)=>{ cursor.x=e.clientX; cursor.y=e.clientY; });
 
-#introText {
-  transition: all 1s ease;
-}
+/* =========================
+   USER INTENT
+========================= */
+function detectIntent(){
+  let dx = cursor.x - lastCursor.x;
+  let dy = cursor.y - lastCursor.y;
+  let speed = Math.sqrt(dx*dx + dy*dy);
 
-#destination {
-  font-size: 60px;
-  font-weight: bold;
-  margin: 0;
-}
+  if(speed<1) userState.calm+=0.01;
+  if(speed>6) userState.restless+=0.02;
+  if(Math.abs(dx)+Math.abs(dy)>10) userState.curious+=0.015;
 
-#message {
-  font-size: 20px;
-  opacity: 0.7;
-}
+  userState.calm*=0.995;
+  userState.restless*=0.995;
+  userState.curious*=0.995;
 
-#enterHint {
-  font-size: 16px;
-  margin-top: 40px;
-  opacity: 0.5;
-  animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 1; }
+  lastCursor.x=cursor.x;
+  lastCursor.y=cursor.y;
 }
 
 /* =========================
-   PRIVATE CONTENT
+   DECIDE MESSAGE
 ========================= */
-#privateContent {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  pointer-events: auto;
-  opacity: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  text-align: center;
-}
-
-.hidden {
-  display: none;
-}
-
-#privateContent button {
-  padding: 15px 30px;
-  border: none;
-  cursor: pointer;
-  background: white;
-  color: black;
-  font-weight: bold;
-  border-radius: 10px;
-  transition: 0.3s;
-}
-
-#privateContent button:hover {
-  background: #ddd;
+function decide(){
+  if(userState.calm>userState.restless) message="You move differently.";
+  else if(userState.restless>userState.calm) message="You are not here for the ordinary.";
+  else message="You noticed.";
+  messageEl.innerText=message;
 }
 
 /* =========================
-   PARTICLES & PRESENCE
+   UPDATE
 ========================= */
-.particle {
-  position: absolute;
-  border-radius: 50%;
-  background: white;
-  pointer-events: none;
+function update(){
+  detectIntent();
+  let elapsed=(Date.now()-startTime)/1000;
+
+  if(elapsed>5 && phase==="explore") phase="build";
+  if(elapsed>9 && phase==="build") phase="collapse";
+  if(elapsed>11 && phase==="collapse"){ phase="reveal"; decide(); showAvatar(); }
+
+  center.x += (cursor.x-center.x)*0.05;
+  center.y += (cursor.y-center.y)*0.05;
+
+  for(let p of particles){
+    let dx=center.x-p.x;
+    let dy=center.y-p.y;
+    let factor=0.0004;
+    if(phase==="build") factor=0.001;
+    if(phase==="collapse") factor=0.02;
+
+    p.vx+=dx*factor;
+    p.vy+=dy*factor;
+    p.vx*=0.95;
+    p.vy*=0.95;
+    p.x+=p.vx/p.depth;
+    p.y+=p.vy/p.depth;
+  }
 }
+
+/* =========================
+   DRAW
+========================= */
+function draw(){
+  ctx.fillStyle="black";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  for(let p of particles){
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,1.5/p.depth,0,Math.PI*2);
+    ctx.fillStyle="white";
+    ctx.fill();
+  }
+}
+
+/* =========================
+   AVATAR
+========================= */
+function showAvatar(){
+  avatar.classList.remove("hidden");
+  avatar.style.left = (cursor.x + 20) + "px";
+  avatar.style.top = (cursor.y + 20) + "px";
+}
+
+/* =========================
+   CLICK TO ENTER PRIVATE WORLD
+========================= */
+window.addEventListener("click",()=>{
+  if(phase==="reveal"){
+    introText.style.display="none";
+    privateContent.classList.remove("hidden");
+    luxuryMessage.innerText="Residences. Volcano views. Isolated coastlines.";
+  }
+});
+
+/* =========================
+   LOOP
+========================= */
+function loop(){ update(); draw(); requestAnimationFrame(loop); }
+loop();
