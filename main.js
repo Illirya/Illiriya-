@@ -18,13 +18,13 @@ let center = { x: canvas.width / 2, y: canvas.height / 2 };
 let cursor = { x: center.x, y: center.y };
 let lastCursor = { x: center.x, y: center.y };
 
-let velocity = { x: 0, y: 0 };
-
 let userState = { calm: 0, restless: 0, curious: 0 };
 
 let startTime = Date.now();
-let revealed = false;
+let phase = "explore"; // explore → build → collapse → reveal
+
 let destination = "";
+let message = "";
 
 /* PARTICLES */
 for (let i = 0; i < 200; i++) {
@@ -43,26 +43,19 @@ window.addEventListener("mousemove", (e) => {
   cursor.y = e.clientY;
 });
 
-window.addEventListener("touchmove", (e) => {
-  cursor.x = e.touches[0].clientX;
-  cursor.y = e.touches[0].clientY;
-});
-
 /* =========================
-   INTENT DETECTION
+   INTENT
 ========================= */
 function detectIntent() {
 
-  velocity.x = cursor.x - lastCursor.x;
-  velocity.y = cursor.y - lastCursor.y;
+  let dx = cursor.x - lastCursor.x;
+  let dy = cursor.y - lastCursor.y;
 
-  let speed = Math.sqrt(velocity.x**2 + velocity.y**2);
+  let speed = Math.sqrt(dx * dx + dy * dy);
 
   if (speed < 1) userState.calm += 0.01;
   if (speed > 6) userState.restless += 0.02;
-
-  let change = Math.abs(velocity.x) + Math.abs(velocity.y);
-  if (change > 10) userState.curious += 0.015;
+  if (Math.abs(dx) + Math.abs(dy) > 10) userState.curious += 0.015;
 
   userState.calm *= 0.995;
   userState.restless *= 0.995;
@@ -73,19 +66,19 @@ function detectIntent() {
 }
 
 /* =========================
-   DESTINATION LOGIC
+   DECISION
 ========================= */
-function decideDestination() {
-
-  if (userState.calm > userState.restless && userState.calm > userState.curious) {
-    return "ICELAND";
+function decide() {
+  if (userState.calm > userState.restless) {
+    destination = "ICELAND";
+    message = "You seek stillness";
+  } else if (userState.restless > userState.calm) {
+    destination = "TOKYO";
+    message = "You crave intensity";
+  } else {
+    destination = "PERU";
+    message = "You are searching";
   }
-
-  if (userState.restless > userState.calm && userState.restless > userState.curious) {
-    return "TOKYO";
-  }
-
-  return "PERU";
 }
 
 /* =========================
@@ -97,10 +90,12 @@ function update() {
 
   let elapsed = (Date.now() - startTime) / 1000;
 
-  if (!revealed && elapsed > 12) {
-    revealed = true;
-    destination = decideDestination();
+  if (elapsed > 8 && phase === "explore") phase = "build";
+  if (elapsed > 11 && phase === "build") {
+    phase = "collapse";
+    decide();
   }
+  if (elapsed > 13 && phase === "collapse") phase = "reveal";
 
   center.x += (cursor.x - center.x) * 0.05;
   center.y += (cursor.y - center.y) * 0.05;
@@ -110,13 +105,19 @@ function update() {
     let dx = center.x - p.x;
     let dy = center.y - p.y;
 
-    if (revealed) {
-      /* Collapse effect */
-      p.vx += dx * 0.01;
-      p.vy += dy * 0.01;
-    } else {
+    if (phase === "explore") {
       p.vx += dx * 0.0004;
       p.vy += dy * 0.0004;
+    }
+
+    if (phase === "build") {
+      p.vx += dx * 0.001;
+      p.vy += dy * 0.001;
+    }
+
+    if (phase === "collapse") {
+      p.vx += dx * 0.02;
+      p.vy += dy * 0.02;
     }
 
     p.vx *= 0.95;
@@ -141,14 +142,29 @@ function draw() {
     ctx.fill();
   }
 
-  /* DESTINATION REVEAL */
-  if (revealed) {
-    ctx.fillStyle = "white";
-    ctx.font = "bold 40px Arial";
+  /* REVEAL */
+  if (phase === "reveal") {
+
+    ctx.fillStyle = "rgba(255,255,255,0.7)";
+    ctx.font = "20px Arial";
     ctx.textAlign = "center";
+    ctx.fillText(message, canvas.width / 2, canvas.height / 2 - 40);
+
+    ctx.fillStyle = "white";
+    ctx.font = "bold 50px Arial";
     ctx.fillText(destination, canvas.width / 2, canvas.height / 2);
+
+    ctx.font = "18px Arial";
+    ctx.fillText("Tap to enter", canvas.width / 2, canvas.height / 2 + 50);
   }
 }
+
+/* CLICK TO CONTINUE */
+window.addEventListener("click", () => {
+  if (phase === "reveal") {
+    alert("Now you go to the real journey page (next step)");
+  }
+});
 
 /* LOOP */
 function loop() {
