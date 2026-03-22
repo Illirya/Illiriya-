@@ -21,10 +21,10 @@ let lastCursor = { x: center.x, y: center.y };
 let userState = { calm: 0, restless: 0, curious: 0 };
 
 let startTime = Date.now();
-let phase = "explore"; // explore → build → collapse → reveal
+let phase = "explore";
 
-let destination = "";
 let message = "";
+let destination = "NICARAGUA";
 
 /* PARTICLES */
 for (let i = 0; i < 200; i++) {
@@ -69,15 +69,13 @@ function detectIntent() {
    DECISION
 ========================= */
 function decide() {
+
   if (userState.calm > userState.restless) {
-    destination = "ICELAND";
-    message = "You seek stillness";
+    message = "You move differently.";
   } else if (userState.restless > userState.calm) {
-    destination = "TOKYO";
-    message = "You crave intensity";
+    message = "You are not here for the ordinary.";
   } else {
-    destination = "PERU";
-    message = "You are searching";
+    message = "You noticed.";
   }
 }
 
@@ -91,10 +89,12 @@ function update() {
   let elapsed = (Date.now() - startTime) / 1000;
 
   if (elapsed > 8 && phase === "explore") phase = "build";
+
   if (elapsed > 11 && phase === "build") {
     phase = "collapse";
     decide();
   }
+
   if (elapsed > 13 && phase === "collapse") phase = "reveal";
 
   center.x += (cursor.x - center.x) * 0.05;
@@ -134,7 +134,6 @@ function update() {
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  /* Particles */
   for (let p of particles) {
     ctx.beginPath();
     ctx.arc(p.x, p.y, 1.5 / p.depth, 0, Math.PI * 2);
@@ -142,10 +141,9 @@ function draw() {
     ctx.fill();
   }
 
-  /* REVEAL */
   if (phase === "reveal") {
 
-    ctx.fillStyle = "rgba(255,255,255,0.7)";
+    ctx.fillStyle = "rgba(255,255,255,0.6)";
     ctx.font = "20px Arial";
     ctx.textAlign = "center";
     ctx.fillText(message, canvas.width / 2, canvas.height / 2 - 40);
@@ -154,15 +152,42 @@ function draw() {
     ctx.font = "bold 50px Arial";
     ctx.fillText(destination, canvas.width / 2, canvas.height / 2);
 
-    ctx.font = "18px Arial";
-    ctx.fillText("Tap to enter", canvas.width / 2, canvas.height / 2 + 50);
+    ctx.font = "16px Arial";
+    ctx.fillText("Enter", canvas.width / 2, canvas.height / 2 + 50);
   }
 }
 
-/* CLICK TO CONTINUE */
+/* CLICK */
 window.addEventListener("click", () => {
   if (phase === "reveal") {
-    alert("Now you go to the real journey page (next step)");
+    document.body.innerHTML = `
+      <div style="
+        color:white;
+        background:black;
+        height:100vh;
+        display:flex;
+        flex-direction:column;
+        justify-content:center;
+        align-items:center;
+        text-align:center;
+        padding:40px;
+      ">
+        <p>Private locations exist beyond public maps.</p>
+        <p>Residences. Volcano views. Isolated coastlines.</p>
+        <br/>
+        <p>Access is limited.</p>
+        <br/>
+        <button style="
+          padding:15px 30px;
+          background:white;
+          color:black;
+          border:none;
+          cursor:pointer;
+        ">
+          Request Entry
+        </button>
+      </div>
+    `;
   }
 });
 
