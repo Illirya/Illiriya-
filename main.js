@@ -37,20 +37,30 @@ let destination = "NICARAGUA";
 /* =========================
    PARTICLES
 ========================= */
+const zones = [
+  { name:"Volcano", x:canvas.width*0.3, y:canvas.height*0.4, radius:150 },
+  { name:"Coast", x:canvas.width*0.7, y:canvas.height*0.6, radius:150 },
+  { name:"Hacienda", x:canvas.width*0.5, y:canvas.height*0.8, radius:150 }
+];
+
 for(let i=0;i<300;i++){
   particles.push({
     x:Math.random()*canvas.width,
     y:Math.random()*canvas.height,
     vx:0,
     vy:0,
-    depth:Math.random()*3+1
+    depth:Math.random()*3+1,
+    color:"white"
   });
 }
 
 /* =========================
    CURSOR
 ========================= */
-window.addEventListener("mousemove",(e)=>{ cursor.x=e.clientX; cursor.y=e.clientY; });
+window.addEventListener("mousemove",(e)=>{
+  cursor.x=e.clientX;
+  cursor.y=e.clientY;
+});
 
 /* =========================
    USER INTENT
@@ -107,6 +117,17 @@ function update(){
     p.vy+=dy*factor;
     p.vx*=0.95;
     p.vy*=0.95;
+
+    /* Zone-based particle color reaction */
+    for(const zone of zones){
+      let dist=Math.hypot(p.x-zone.x,p.y-zone.y);
+      if(dist<zone.radius){
+        if(userState.calm>userState.restless) p.color="gold";
+        else if(userState.restless>userState.calm) p.color="violet";
+        else p.color="cyan";
+      }
+    }
+
     p.x+=p.vx/p.depth;
     p.y+=p.vy/p.depth;
   }
@@ -121,8 +142,8 @@ function draw(){
 
   for(let p of particles){
     ctx.beginPath();
-    ctx.arc(p.x,p.y,1.5/p.depth,0,Math.PI*2);
-    ctx.fillStyle="white";
+    ctx.arc(p.x,p.y,2/p.depth,0,Math.PI*2);
+    ctx.fillStyle=p.color;
     ctx.fill();
   }
 }
@@ -143,7 +164,7 @@ window.addEventListener("click",()=>{
   if(phase==="reveal"){
     introText.style.display="none";
     privateContent.classList.remove("hidden");
-    luxuryMessage.innerText="Residences. Volcano views. Isolated coastlines.";
+    luxuryMessage.innerText="Residences. Volcano views. Isolated coastlines. Hidden experiences await.";
   }
 });
 
