@@ -92,10 +92,9 @@ canvas {
   transition: transform 0.2s ease, opacity 0.5s ease;
 }
 
-/* Particles */
+/* Particle glow effect */
 .particle {
   position:absolute;
   border-radius:50%;
-  background:white;
   pointer-events:none;
 }
